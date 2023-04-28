@@ -2,16 +2,20 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract StarsX is ERC1155,Ownable,Pausable{
+contract ABXNft is ERC1155,Ownable,Pausable{
 
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
+    address constant ABX_ADDRESS = 0x4892F35B4d956B5EA4C878320A11fFF0a50CeC4c; 
+    IERC20 ABX = IERC20(ABX_ADDRESS);
+    
     uint256 public total_Supply;
     uint256 public Supply;
     uint256 public Price;
@@ -35,7 +39,11 @@ contract StarsX is ERC1155,Ownable,Pausable{
        require(Mint_State,"##0");
        require(_Amount>0,'##1');
        require(_Amount.add(Supply)<=total_Supply,"##2");
-       require(msg.value == _Amount*Price,"##3");
+       ABX.transferFrom(
+            msg.sender,
+            address(this),
+            (_Amount*Price)
+        );
         Supply = Supply.add(_Amount);
        if(Supply == total_Supply){
            Mint_State = false;
@@ -55,14 +63,12 @@ contract StarsX is ERC1155,Ownable,Pausable{
         return _Symbol;
     }
     //Owner Functions
-    function SetPrice(uint256 _Price) public onlyOwner returns(bool){
+    function SetPrice(uint256 _Price) public onlyOwner{
         Price = _Price;
-        return true;
     }
 
-    function SetURI(string memory _NewURI) public onlyOwner returns(bool){
+    function SetURI(string memory _NewURI) public onlyOwner{
          _setURI(_NewURI);
-        return true;
     }
 
     function SetPause() public onlyOwner returns(bool){
@@ -81,5 +87,4 @@ contract StarsX is ERC1155,Ownable,Pausable{
         (bool sent,) = owner().call{value: address(this).balance}("");
         require(sent, "Failed to send Ether");
     }
-
 }
